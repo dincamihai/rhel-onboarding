@@ -10,12 +10,7 @@ import py.error
 from functools import partial
 from py.path import local
 from saltcontainers.factories import MinionFactory
-
-
-IMAGES = dict(
-    rhel6='registry.mgr.suse.de/toaster-rhel6-products',
-    rhel7='registry.mgr.suse.de/toaster-rhel7-products'
-)
+from onboarding.config import IMAGES
 
 
 def create_minion(image):
@@ -69,10 +64,10 @@ def handler(name, tmpdir, signum, frame):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--version', choices=['rhel6', 'rhel7'])
+    parser.add_argument('--label', choices=['rhel6', 'rhel7'])
     args = parser.parse_args()
 
-    minion = create_minion(IMAGES[args.version])
+    minion = create_minion(IMAGES[args.label])
     name = minion['container']['config']['name']
 
     sys.stdout.write("minion id: {0}\n".format(minion['id']))

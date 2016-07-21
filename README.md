@@ -15,6 +15,11 @@ cp .env-example .env
 
 change `MASTER_IP` in `.env` to point to a SuSE Manager instance reacheble from your machine.
 
+obtain the dockerfiles
+```bash
+make dockerfiles
+```
+
 make sure docker service is running:
 ```bash
 systemctl start docker

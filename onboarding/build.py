@@ -1,31 +1,30 @@
-import os
 import re
 import argparse
+from py.path import local
 from docker import Client
-
-
-def build_docker_image(version, flavor, nocache=False):
-    docker_client = Client(base_url='unix://var/run/docker.sock')
-
-    return docker_client.build(
-        tag='registry.mgr.suse.de/toaster-{0}-{1}'.format(version, flavor),
-        dockerfile='Dockerfile.{0}.{1}'.format(version, flavor),
-        path='./onboarding/docker/',
-        pull=True,
-        decode=True,
-        forcerm=True,
-        nocache=nocache
-    )
+from onboarding.config import IMAGES
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--nocache', action='store_true', default=False)
-    parser.add_argument('--version')
-    parser.add_argument('--flavor')
-    args = parser.parse_args()
+    parser.add_argument('--dockerfile', type=local)
+    parser.add_argument('--label', choices=IMAGES.keys())
+    arguments = parser.parse_args()
     content = ''
-    stream = build_docker_image(args.version, args.flavor, nocache=args.nocache)
+
+    client = Client(base_url='unix://var/run/docker.sock')
+
+    stream = client.build(
+        tag=IMAGES[arguments.label],
+        dockerfile=arguments.dockerfile.basename,
+        path=arguments.dockerfile.dirname,
+        pull=True,
+        decode=True,
+        forcerm=True,
+        nocache=arguments.nocache
+    )
+
     for item in stream:
         buff = item.get('stream', item.get('status', ''))
 
