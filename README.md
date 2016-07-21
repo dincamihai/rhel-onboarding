@@ -10,8 +10,15 @@ source sandbox/bin/activate
 pip install -r requirements
 cp .env-example .env
 ```
+
 change `MASTER_IP` in `.env` to point to a SuSE Manager instance reacheble from your machine.
 
+make sure docker service is running:
+```bash
+systemctl start docker
+```
+
+now you can run:
 ```bash
 tox
 ```
