@@ -27,6 +27,7 @@ setup(
     install_requires=[
         'pytest-salt-containers',
         'docker-py',
+        'honcho',
         'fake-factory',
         'py'
     ],
