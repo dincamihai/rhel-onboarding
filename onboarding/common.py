@@ -1,8 +1,9 @@
 import os
+import sys
 import faker
 import tempfile
 import tarfile
-from docker import Client
+import docker
 from py.path import local
 from saltcontainers.factories import MinionFactory
 
@@ -29,7 +30,7 @@ def create_minion(docker_client, label):
 def start(label):
     tmpdir = local(tempfile.mkdtemp())
     try:
-        client = Client(base_url='unix://var/run/docker.sock')
+        client = docker.Client(base_url='unix://var/run/docker.sock')
 
         minion = create_minion(client, label)
 
@@ -49,6 +50,11 @@ def start(label):
 
 
 def handler(name, signum, frame):
-    print 'docker rm -f {0}'.format(name)
-    client = Client(base_url='unix://var/run/docker.sock')
-    client.remove_container(name, force=True)
+    client = docker.Client(base_url='unix://var/run/docker.sock')
+    try:
+        client.remove_container(name, force=True)
+    except docker.errors.APIError as err:
+        print 'Cleanup command failed: docker rm -f {0}'.format(name)
+        print err.message
+    finally:
+        sys.exit(0)
