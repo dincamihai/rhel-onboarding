@@ -7,10 +7,6 @@ This tool makes it easy for you to start a rhel6 and rhel7 salt minions in 2 doc
 ```bash
 git clone git@github.com:dincamihai/rhel-onboarding.git
 cd rhel-onboarding
-virtualenv sandbox
-echo "*" > sandbox/.gitignore
-source sandbox/bin/activate
-pip install -r requirements
 cp .env-example .env
 ```
 
@@ -21,9 +17,18 @@ make sure docker service is running:
 systemctl start docker
 ```
 
-now you can run:
+
+if you have `tox` installed you can run:
 ```bash
 tox
+```
+
+if you don't have tox:
+```bash
+virtualenv sandbox
+echo "*" > sandbox/.gitignore
+source sandbox/bin/activate
+pip install tox
 ```
 
 This starts two salt minions in docker containers, one running rhel6 and the other rhel7.
