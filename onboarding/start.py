@@ -6,6 +6,7 @@ import tarfile
 import docker
 import signal
 import argparse
+import py.error
 from functools import partial
 from py.path import local
 from saltcontainers.factories import MinionFactory
@@ -17,11 +18,12 @@ IMAGES = dict(
 )
 
 
-def create_minion(docker_client, image):
+def create_minion(image):
+    client = docker.Client(base_url='unix://var/run/docker.sock')
     salt_root = local(tempfile.mkdtemp())
-    host_config = docker_client.create_host_config(network_mode='host')
+    host_config = client.create_host_config(network_mode='host')
     return MinionFactory(
-        container__config__docker_client=docker_client,
+        container__config__docker_client=client,
         container__config__image=image,
         container__config__salt_config__tmpdir=salt_root,
         container__config__salt_config__conf_type='minion',
@@ -32,52 +34,60 @@ def create_minion(docker_client, image):
     )
 
 
-def start(image):
+def set_machine_id(minion):
     tmpdir = local(tempfile.mkdtemp())
     fake = faker.Faker()
     machineid = fake.sha1()
-    try:
-        client = docker.Client(base_url='unix://var/run/docker.sock')
-        minion = create_minion(client, image)
-        config = minion['container']['config']
+    config = minion['container']['config']
+    with (tmpdir / 'etc' / 'machine-id').open(mode='wb', ensure=True) as f:
+        f.write(machineid)
 
-        with (tmpdir / 'etc' / 'machine-id').open(mode='wb', ensure=True) as f:
-            f.write(machineid)
+    with tarfile.open((tmpdir / 'machine-id.tar').strpath, mode='w') as archive:
+        archive.add((tmpdir / 'etc').strpath, arcname='etc')
 
-        with tarfile.open((tmpdir / 'machine-id.tar').strpath, mode='w') as archive:
-            archive.add((tmpdir / 'etc').strpath, arcname='etc')
-
-        with open((tmpdir / 'machine-id.tar').strpath, 'rb') as f:
-            config['docker_client'].put_archive(config['name'], '/', f.read())
-
-        print 'generated machine id {0} stored in /etc/machine-id'.format(machineid)
-        return minion
-    finally:
-        tmpdir.remove()
+    with open((tmpdir / 'machine-id.tar').strpath, 'rb') as f:
+        config['docker_client'].put_archive(config['name'], '/', f.read())
+    return machineid, tmpdir
 
 
-def handler(name, signum, frame):
+def handler(name, tmpdir, signum, frame):
     client = docker.Client(base_url='unix://var/run/docker.sock')
     try:
-        sys.stdout.write("removing container {0}".format(name))
+        sys.stdout.write("removing container {0}\n".format(name))
         client.remove_container(name, force=True)
+        tmpdir.remove()
+    except py.error.ENOENT as err:
+        pattern = 'removing {0} failed with message: {1}\n'
+        sys.stdout.write(pattern.format(tmpdir, err.message))
     except Exception as err:
-        print 'cleanup command failed: docker rm -f {0}'.format(name)
-        print err.message
+        sys.stdout.write(
+            'cleanup command failed: docker rm -f {0}\n'.format(name))
+        sys.stdout.write(err.message)
     finally:
         sys.exit(0)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--version', choices=['rhel6', 'rhel7'])
     args = parser.parse_args()
-    minion = start(IMAGES[args.version])
+
+    minion = create_minion(IMAGES[args.version])
     name = minion['container']['config']['name']
+
     sys.stdout.write("minion id: {0}\n".format(minion['id']))
     sys.stdout.write("container id: {0}\n".format(name))
     sys.stdout.write(
         "shell command: 'docker exec -it {0} /bin/bash'\n".format(name))
+
+    machineid, tmpdir = set_machine_id(minion)
+    sys.stdout.write(
+        "generated machine id {0} stored in /etc/machine-id\n".format(machineid))
+
     sys.stdout.flush()
-    signal.signal(signal.SIGTERM, partial(handler, name))
+    signal.signal(signal.SIGTERM, partial(handler, name, tmpdir))
     signal.pause()
+
+
+if __name__ == '__main__':
+    main()
