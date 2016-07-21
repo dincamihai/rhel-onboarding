@@ -59,9 +59,10 @@ def start(image):
 def handler(name, signum, frame):
     client = docker.Client(base_url='unix://var/run/docker.sock')
     try:
+        sys.stdout.write("removing container {0}".format(name))
         client.remove_container(name, force=True)
-    except docker.errors.APIError as err:
-        print 'Cleanup command failed: docker rm -f {0}'.format(name)
+    except Exception as err:
+        print 'cleanup command failed: docker rm -f {0}'.format(name)
         print err.message
     finally:
         sys.exit(0)
