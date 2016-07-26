@@ -6,8 +6,8 @@ default:
 	honcho start
 
 dockerfiles:
-	wget -O docker/$(RHEL6_DOCKRFILE) https://raw.githubusercontent.com/openSUSE/salt-toaster/master/docker/Dockerfile.rhel6.products
-	wget -O docker/$(RHEL7_DOCKRFILE) https://raw.githubusercontent.com/openSUSE/salt-toaster/master/docker/Dockerfile.rhel7.products
+	wget -O docker/$(RHEL6_DOCKRFILE) https://raw.githubusercontent.com/dincamihai/dockerfiles/master/Dockerfile.rhel6.products
+	wget -O docker/$(RHEL7_DOCKRFILE) https://raw.githubusercontent.com/dincamihai/dockerfiles/master/Dockerfile.rhel7.products
 
 build:
 	python -m onboarding.build --dockerfile docker/$(RHEL6_DOCKRFILE) --label rhel6
