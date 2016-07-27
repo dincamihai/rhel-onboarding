@@ -4,10 +4,12 @@ This tool makes it easy for you to start a rhel6 and rhel7 salt minions in 2 doc
 
 ## How to
 
+install python-docker-py linux package (eg: with sudo zypper in python-docker-py)
+
 ```bash
 git clone git@github.com:dincamihai/rhel-onboarding.git
 cd rhel-onboarding
-virtualenv sandbox
+virtualenv sandbox --system-site-packages
 source sandbox/bin/activate
 pip install -e .
 cp .env-example .env
