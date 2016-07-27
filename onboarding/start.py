@@ -9,31 +9,36 @@ import argparse
 import py.error
 from functools import partial
 from py.path import local
-from saltcontainers.factories import MinionFactory
+from saltcontainers.factories import (
+    ContainerConfigFactory, ContainerFactory, MinionFactory
+)
 from onboarding.config import IMAGES
 
 
-def create_minion(image):
+def create_container_config(image):
     client = docker.Client(base_url='unix://var/run/docker.sock')
     salt_root = local(tempfile.mkdtemp())
     host_config = client.create_host_config(network_mode='host')
-    return MinionFactory(
-        container__config__docker_client=client,
-        container__config__image=image,
-        container__config__salt_config__tmpdir=salt_root,
-        container__config__salt_config__conf_type='minion',
-        container__config__salt_config__config={
+    return ContainerConfigFactory(
+        docker_client=client,
+        image=image,
+        salt_config__tmpdir=salt_root,
+        salt_config__conf_type='minion',
+        salt_config__config={
             'base_config': {'master': os.environ['MASTER_IP']}
         },
-        container__config__host_config=host_config
+        host_config=host_config
     )
 
 
-def set_machine_id(minion):
+def create_container(config):
+    return ContainerFactory(config=config)
+
+
+def set_machine_id(config):
     tmpdir = local(tempfile.mkdtemp())
     fake = faker.Faker()
     machineid = fake.sha1()
-    config = minion['container']['config']
     with (tmpdir / 'etc' / 'machine-id').open(mode='wb', ensure=True) as f:
         f.write(machineid)
 
@@ -65,17 +70,23 @@ def handler(name, tmpdir, signum, frame):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--label', choices=['rhel6', 'rhel7'])
+    parser.add_argument('--nosalt', action='store_true', default=False)
     args = parser.parse_args()
 
-    minion = create_minion(IMAGES[args.label])
-    name = minion['container']['config']['name']
+    config = create_container_config(IMAGES[args.label])
 
-    sys.stdout.write("minion id: {0}\n".format(minion['id']))
+    if args.nosalt:
+        ContainerFactory(config=config)
+    else:
+        minion = MinionFactory(container__config=config)
+        sys.stdout.write("minion id: {0}\n".format(minion['id']))
+
+    machineid, tmpdir = set_machine_id(config)
+    name = config['name']
+
     sys.stdout.write("container id: {0}\n".format(name))
     sys.stdout.write(
         "shell command: 'docker exec -it {0} /bin/bash'\n".format(name))
-
-    machineid, tmpdir = set_machine_id(minion)
     sys.stdout.write(
         "generated machine id {0} stored in /etc/machine-id\n".format(machineid))
 
