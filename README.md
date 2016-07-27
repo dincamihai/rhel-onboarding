@@ -15,24 +15,24 @@ pip install -e .
 cp .env-example .env
 ```
 
-change `MASTER_IP` in `.env` to point to a SuSE Manager instance reachable from your machine.
+- change `MASTER_IP` in `.env` to point to a SuSE Manager instance reachable from your machine.
 
-make sure docker service is running:
+- make sure docker service is running:
 ```bash
 systemctl start docker
 ```
 
-obtain the dockerfiles:
+- obtain the dockerfiles:
 ```bash
 make dockerfiles
 ```
 
-build docker images:
+- build docker images:
 ```bash
 make build
 ```
 
-start rhel6 and rhel7 minions:
+- start rhel6 and rhel7 minions:
 ```bash
 make
 ```
