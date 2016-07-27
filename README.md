@@ -4,6 +4,8 @@ This tool makes it easy for you to start a rhel6 and rhel7 salt minions in 2 doc
 
 ## How to
 
+- ensure that you can run docker from your user: `docker ps -a`. If not, add your user to `docker` group, restart docker daemon (`systemctl restart docker.service`) and launch `newgrp`.
+
 - install python-docker-py linux package (eg: with sudo zypper in python-docker-py)
 
 - clone and setup
