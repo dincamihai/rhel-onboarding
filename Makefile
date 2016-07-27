@@ -6,6 +6,7 @@ default:
 	honcho start
 
 dockerfiles:
+	mkdir -p docker/
 	wget -O docker/$(RHEL6_DOCKRFILE) https://raw.githubusercontent.com/dincamihai/dockerfiles/master/Dockerfile.rhel6.products
 	wget -O docker/$(RHEL7_DOCKRFILE) https://raw.githubusercontent.com/dincamihai/dockerfiles/master/Dockerfile.rhel7.products
 
