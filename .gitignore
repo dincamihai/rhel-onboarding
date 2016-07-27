@@ -90,3 +90,5 @@ ENV/
 
 .tox
 docker
+
+sandbox
