@@ -69,7 +69,7 @@ def handler(name, tmpdir, signum, frame):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--label', choices=['rhel6', 'rhel7'])
+    parser.add_argument('--label', choices=IMAGES.keys())
     parser.add_argument('--nosalt', action='store_true', default=False)
     args = parser.parse_args()
 

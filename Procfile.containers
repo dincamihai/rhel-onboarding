@@ -1,0 +1,6 @@
+rhel6: python -m onboarding.start --label rhel6 --nosalt
+rhel7: python -m onboarding.start --label rhel7 --nosalt
+sles11sp3: python -m onboarding.start --label sles11sp3 --nosalt
+sles11sp4: python -m onboarding.start --label sles11sp4 --nosalt
+sles12: python -m onboarding.start --label sles12 --nosalt
+sles12sp1: python -m onboarding.start --label sles12sp1 --nosalt
